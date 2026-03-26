@@ -41,7 +41,15 @@ export async function GET() {
   });
 
   return NextResponse.json({
-    items: docs.map((doc) => ({
+    items: docs.map((doc: {
+      id: string;
+      type: string;
+      slug: string;
+      title: string;
+      status: string;
+      publishVersion: string | null;
+      updatedAt: Date;
+    }) => ({
       id: doc.id,
       type: doc.type,
       slug: doc.slug,
