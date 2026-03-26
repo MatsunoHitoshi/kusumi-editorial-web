@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+.env
+.env.local
+*.log
+coverage
+.DS_Store
+apps/*/.next
+apps/*/out
+
+local-resources

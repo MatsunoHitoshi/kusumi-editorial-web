@@ -1,0 +1,105 @@
+name: Deploy Site
+
+on:
+  workflow_dispatch:
+    inputs:
+      triggeredBy:
+        description: "Triggered user"
+        required: true
+        type: string
+      publishVersion:
+        description: "UTC timestamp version (yyyyMMddHHmmss)"
+        required: true
+        type: string
+      contentTypes:
+        description: "JSON array of content types"
+        required: false
+        default: '["pages","articles","projects","reading"]'
+        type: string
+      fullRebuild:
+        description: "Run full rebuild"
+        required: false
+        default: "true"
+        type: string
+      reason:
+        description: "Optional publish reason"
+        required: false
+        default: ""
+        type: string
+
+concurrency:
+  group: site-deploy-${{ github.event.inputs.publishVersion }}
+  cancel-in-progress: false
+
+jobs:
+  build_site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build static site
+        env:
+          PUBLISH_API_BASE_URL: ${{ secrets.PUBLISH_API_BASE_URL }}
+          PUBLISH_API_TOKEN: ${{ secrets.PUBLISH_API_TOKEN }}
+          PUBLISH_VERSION: ${{ github.event.inputs.publishVersion }}
+        run: npm --workspace @kusumi/site run build
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/site/out
+
+  deploy_pages:
+    needs: build_site
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  notify_failure:
+    if: failure()
+    needs: [build_site, deploy_pages]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Create failure issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const publishVersion = "${{ github.event.inputs.publishVersion }}";
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = `[Publish Failed] ${publishVersion}`;
+            const body = [
+              `publishVersion: ${publishVersion}`,
+              `run: ${runUrl}`,
+              `triggeredBy: ${{ github.event.inputs.triggeredBy }}`,
+              "",
+              "Recovery:",
+              "1. Open the run URL",
+              "2. Check failed step logs",
+              "3. Fix and re-run failed jobs"
+            ].join("\n");
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body
+            });

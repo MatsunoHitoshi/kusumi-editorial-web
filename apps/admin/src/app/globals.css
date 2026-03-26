@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-white text-zinc-900;
+}
+
+button,
+button *,
+[role="button"],
+[role="button"] *,
+a[href],
+a[href] * {
+  cursor: pointer !important;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed !important;
+}
+
+img.content-image[data-width-percent] {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 640px) {
+  img.content-image[data-width-percent] {
+    width: 100% !important;
+  }
+}
