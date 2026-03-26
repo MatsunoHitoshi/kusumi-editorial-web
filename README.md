@@ -9,7 +9,7 @@
   - Next.js (App Router), TailwindCSS, Tiptap
   - Prisma + Supabase Postgres
   - Supabase Storage（画像）
-  - 公開反映ボタンから GitHub Actions を dispatch
+  - 公開反映ボタンから `publishVersion` を採番して反映（本番は GitHub Actions dispatch、ローカル開発は `apps/site` をその場で build）
 - `apps/site`: 公開サイト（GitHub Pages想定）
   - Next.js static export
   - 管理アプリの公開APIから `publishVersion` 指定で取得したデータをSSG
@@ -53,14 +53,16 @@
 
 1. 管理アプリで draft を保存
 2. `admin` ロールが公開反映を実行
-3. 管理アプリが GitHub Actions `workflow_dispatch` を呼ぶ（`publishVersion: yyyyMMddHHmmss`）
-4. Actions が管理アプリの公開APIから published データを取得して `apps/site` をビルド
-5. GitHub Pages へデプロイ
+3. 管理アプリが `publishVersion`（`yyyyMMddHHmmss`）を公開中コンテンツへ付与
+4. 本番環境: GitHub Actions `workflow_dispatch` を呼び、公開APIから published データを取得して `apps/site` をビルド
+5. 本番環境: GitHub Pages へデプロイ
+6. ローカル開発環境: GitHub dispatch の代わりに `npm --workspace @kusumi/site run build` を実行し、`apps/site/out` を生成
 
 ## 実装済みAPI（初期）
 
 - 管理公開API
   - `GET /api/publish?publishVersion=yyyyMMddHHmmss`
+  - `GET /api/publish?publishVersion=latest`（公開済みドキュメントに付与された最新の `publishVersion` を解決）
   - ヘッダー `x-publish-token` 必須
   - Prismaから `status=published && publishVersion=... && deletedAt=null` のドキュメントを取得して返却（論理削除済みは含めない）
 - 管理コンテンツAPI
@@ -73,7 +75,8 @@
   - `POST /api/workflows/dispatch`（adminのみ）
   - ボディに `confirmPublication: true` 必須（UI の最終確認チェックと同様・誤実行防止）
   - 任意: `reason`（200文字以内・Actions の入力に渡す）
-  - `publishVersion` を生成し、公開中ドキュメントへ付与後に Actions dispatch
+  - `publishVersion` を生成し、公開中ドキュメントへ付与
+  - 本番では Actions dispatch、ローカル開発ではローカル build を実行（レスポンスに `localBuild: true` が付く）
 - 公開対象プレビューAPI
   - `GET /api/admin/publish-preview`（adminのみ・確認ダイアログ用）
 
@@ -134,7 +137,7 @@ npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prism
 
 ## 開発メモ
 
-このリポジトリは初期雛形のため、認証実装・Prisma接続・Tiptap本体・ビルド連携の詳細は段階的に実装します。
+認証（NextAuth Credentials）・Prisma 接続・Tiptap エディタ・公開反映（dispatch/ローカル build フォールバック）は実装済みです。以降は運用要件に合わせて拡張します。
 
 ## Supabase ローカル開発（CLI + Docker）
 

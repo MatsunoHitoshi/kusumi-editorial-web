@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         "http://127.0.0.1:3000";
 
       // admin の next dev から NODE_ENV=development が継承されると next build が壊れる（Html/useContext 等）
-      const buildEnv = {
+      const buildEnv: NodeJS.ProcessEnv = {
         ...process.env,
         PUBLISH_API_BASE_URL: publishApiBaseUrl,
         PUBLISH_API_TOKEN: env.PUBLISH_API_TOKEN,

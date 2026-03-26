@@ -2,7 +2,6 @@ import path from "node:path";
 
 import { config } from "dotenv";
 import { hash } from "bcryptjs";
-import { UserRole } from "@prisma/client";
 
 // import はホイスとされるため、@/lib/prisma を静的 import すると .env より先に Pool が作られ DATABASE_URL が空になる。
 // `npm --workspace @kusumi/admin run create-admin` の cwd は apps/admin
@@ -26,12 +25,12 @@ async function main() {
     where: { email },
     update: {
       passwordHash,
-      role: UserRole.admin
+      role: "admin"
     },
     create: {
       email,
       passwordHash,
-      role: UserRole.admin
+      role: "admin"
     }
   });
 

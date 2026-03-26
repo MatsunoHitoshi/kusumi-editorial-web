@@ -1,7 +1,7 @@
 "use client";
 
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import type { MouseEvent } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 
 function clampPercent(v: number): number {
   if (!Number.isFinite(v)) return 100;
@@ -13,7 +13,7 @@ export function ResizableImageNodeView({ node, updateAttributes, selected }: Nod
   const alt = String(node.attrs.alt ?? "");
   const widthPercent = clampPercent(Number(node.attrs.widthPercent ?? 100));
 
-  function startResize(event: MouseEvent<HTMLButtonElement>) {
+  function startResize(event: ReactMouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
 
@@ -28,7 +28,7 @@ export function ResizableImageNodeView({ node, updateAttributes, selected }: Nod
     const startWidthPx = imageEl ? imageEl.getBoundingClientRect().width : wrapper.getBoundingClientRect().width;
     const baseWidthPx = Math.max(1, editorRoot.getBoundingClientRect().width);
 
-    const onMove = (moveEvent: MouseEvent) => {
+    const onMove = (moveEvent: globalThis.MouseEvent) => {
       const dx = moveEvent.clientX - startX;
       const nextPx = startWidthPx + dx;
       const nextPercent = clampPercent((nextPx / baseWidthPx) * 100);
