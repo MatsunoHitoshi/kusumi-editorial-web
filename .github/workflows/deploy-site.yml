@@ -72,34 +72,36 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  notify_failure:
-    if: failure()
-    needs: [build_site, deploy_pages]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      issues: write
-    steps:
-      - name: Create failure issue
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const publishVersion = "${{ github.event.inputs.publishVersion }}";
-            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const title = `[Publish Failed] ${publishVersion}`;
-            const body = [
-              `publishVersion: ${publishVersion}`,
-              `run: ${runUrl}`,
-              `triggeredBy: ${{ github.event.inputs.triggeredBy }}`,
-              "",
-              "Recovery:",
-              "1. Open the run URL",
-              "2. Check failed step logs",
-              "3. Fix and re-run failed jobs"
-            ].join("\n");
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title,
-              body
-            });
+  # Disabled for public repository operations:
+  # failure details and operator metadata (e.g. triggeredBy) can leak to public Issues.
+  # notify_failure:
+  #   if: failure()
+  #   needs: [build_site, deploy_pages]
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     issues: write
+  #   steps:
+  #     - name: Create failure issue
+  #       uses: actions/github-script@v7
+  #       with:
+  #         script: |
+  #           const publishVersion = "${{ github.event.inputs.publishVersion }}";
+  #           const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+  #           const title = `[Publish Failed] ${publishVersion}`;
+  #           const body = [
+  #             `publishVersion: ${publishVersion}`,
+  #             `run: ${runUrl}`,
+  #             `triggeredBy: ${{ github.event.inputs.triggeredBy }}`,
+  #             "",
+  #             "Recovery:",
+  #             "1. Open the run URL",
+  #             "2. Check failed step logs",
+  #             "3. Fix and re-run failed jobs"
+  #           ].join("\n");
+  #           await github.rest.issues.create({
+  #             owner: context.repo.owner,
+  #             repo: context.repo.repo,
+  #             title,
+  #             body
+  #           });

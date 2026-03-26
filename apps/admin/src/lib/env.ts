@@ -1,13 +1,13 @@
 import { z } from "zod";
 
 const envSchema = z.object({
-  PUBLISH_API_TOKEN: z.string().min(1).default("dev-token"),
-  GITHUB_OWNER: z.string().min(1).default("owner"),
-  GITHUB_REPO: z.string().min(1).default("repo"),
-  ADMIN_DISPATCH_TOKEN: z.string().min(1).default("dev-dispatch-token"),
-  SUPABASE_URL: z.string().url().default("https://example.supabase.co"),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).default("dev-service-role"),
-  SUPABASE_STORAGE_BUCKET: z.string().min(1).default("content-images")
+  PUBLISH_API_TOKEN: z.string().min(1),
+  GITHUB_OWNER: z.string().min(1),
+  GITHUB_REPO: z.string().min(1),
+  ADMIN_DISPATCH_TOKEN: z.string().min(1),
+  SUPABASE_URL: z.string().url(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  SUPABASE_STORAGE_BUCKET: z.string().min(1)
 });
 
 export const env = envSchema.parse({
