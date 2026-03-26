@@ -51,6 +51,8 @@ jobs:
           PUBLISH_API_BASE_URL: ${{ secrets.PUBLISH_API_BASE_URL }}
           PUBLISH_API_TOKEN: ${{ secrets.PUBLISH_API_TOKEN }}
           PUBLISH_VERSION: ${{ github.event.inputs.publishVersion }}
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          NEXT_PUBLIC_SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
         run: npm --workspace @kusumi/site run build
 
       - name: Upload pages artifact
