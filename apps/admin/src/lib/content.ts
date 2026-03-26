@@ -13,6 +13,19 @@ export const contentTypeByBucket: Record<"pages" | "articles" | "projects" | "re
 
 type ContentStatusValue = "draft" | "published";
 
+type ContentDocumentRow = {
+  id: string;
+  schemaVersion: number;
+  type: ContentTypeValue;
+  slug: string;
+  title: string;
+  status: string;
+  body: unknown;
+  publishVersion: string | null;
+  publishedAt: Date | null;
+  updatedAt: Date;
+};
+
 function asContent<
   T extends "page" | "article" | "project" | "reading"
 >(
@@ -53,14 +66,14 @@ export async function getLatestPublishVersionTag(): Promise<string | null> {
 }
 
 export async function getPublishSnapshot(publishVersion: string): Promise<PublishSnapshot> {
-  const docs = await prisma.contentDocument.findMany({
+  const docs = (await prisma.contentDocument.findMany({
     where: {
       ...notDeletedContentWhere,
       status: "published",
       publishVersion
     },
     orderBy: [{ type: "asc" }, { updatedAt: "desc" }]
-  });
+  })) as unknown as ContentDocumentRow[];
 
   return {
     version: publishVersion,
@@ -104,7 +117,7 @@ export interface PublishPreviewSummary {
 }
 
 export async function getPublishPreviewSummary(): Promise<PublishPreviewSummary> {
-  const published = await prisma.contentDocument.findMany({
+  const published = (await prisma.contentDocument.findMany({
     where: { ...notDeletedContentWhere, status: "published" },
     select: {
       id: true,
@@ -115,7 +128,14 @@ export async function getPublishPreviewSummary(): Promise<PublishPreviewSummary>
       updatedAt: true
     },
     orderBy: [{ type: "asc" }, { updatedAt: "desc" }]
-  });
+  })) as unknown as Array<{
+    id: string;
+    type: ContentTypeValue;
+    slug: string;
+    title: string;
+    publishVersion: string | null;
+    updatedAt: Date;
+  }>;
 
   const byType: PublishPreviewSummary["byType"] = {
     page: 0,
