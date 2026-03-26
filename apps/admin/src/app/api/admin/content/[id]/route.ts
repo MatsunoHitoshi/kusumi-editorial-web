@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { notDeletedContentWhere } from "@/lib/content-document-scope";
 import { getSessionUser, requireRole } from "@/lib/auth";
@@ -13,6 +12,15 @@ const updateSchema = z.object({
   status: contentStatusSchema.optional(),
   body: z.record(z.unknown()).optional()
 });
+
+function hasPrismaErrorCode(error: unknown, code: string): boolean {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as { code?: unknown }).code === code
+  );
+}
 
 interface Params {
   params: { id: string };
@@ -40,7 +48,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       data: {
         slug: payload.slug,
         title: payload.title,
-        body: payload.body as Prisma.InputJsonValue | undefined,
+        body: payload.body as any,
         status: payload.status,
         publishedAt:
           payload.status === "published"
@@ -57,7 +65,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       updatedAt: updated.updatedAt.toISOString()
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    if (hasPrismaErrorCode(error, "P2002")) {
       return NextResponse.json(
         { error: "同じ type / slug / status のドキュメントが既に存在します" },
         { status: 409 }
@@ -96,7 +104,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+    if (hasPrismaErrorCode(error, "P2025")) {
       return NextResponse.json({ error: "not found" }, { status: 404 });
     }
     if (error instanceof Error && error.message === "unauthorized") {

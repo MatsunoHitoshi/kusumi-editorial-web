@@ -1,4 +1,3 @@
-import type { Prisma } from "@prisma/client";
 import type { PublishSnapshot } from "@kusumi/content-schema";
 import { notDeletedContentWhere } from "@/lib/content-document-scope";
 import { prisma } from "@/lib/prisma";
@@ -12,15 +11,28 @@ export const contentTypeByBucket: Record<"pages" | "articles" | "projects" | "re
   reading: "reading"
 };
 
+type ContentStatusValue = "draft" | "published";
+
 function asContent<
   T extends "page" | "article" | "project" | "reading"
->(doc: Prisma.ContentDocumentGetPayload<Record<string, never>>, type: T) {
+>(
+  doc: {
+    schemaVersion: number;
+    slug: string;
+    title: string;
+    status: string;
+    body: unknown;
+    updatedAt: Date;
+    publishedAt: Date | null;
+  },
+  type: T
+) {
   return {
     schemaVersion: doc.schemaVersion,
     type,
     slug: doc.slug,
     title: doc.title,
-    status: doc.status,
+    status: doc.status as ContentStatusValue,
     body: doc.body as { type: string; content?: unknown[] },
     updatedAt: doc.updatedAt.toISOString(),
     publishedAt: doc.publishedAt?.toISOString()

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { notDeletedContentWhere } from "@/lib/content-document-scope";
 import { getSessionUser, requireRole } from "@/lib/auth";
@@ -15,6 +14,15 @@ const createSchema = z.object({
   status: contentStatusSchema.default("draft"),
   body: z.record(z.unknown()).default({ type: "doc", content: [] })
 });
+
+function hasPrismaErrorCode(error: unknown, code: string): boolean {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as { code?: unknown }).code === code
+  );
+}
 
 export async function GET() {
   try {
@@ -58,7 +66,7 @@ export async function POST(request: Request) {
         slug: payload.slug,
         title: payload.title,
         status: payload.status,
-        body: payload.body as Prisma.InputJsonValue,
+        body: payload.body as any,
         publishedAt: payload.status === "published" ? new Date() : null
       }
     });
@@ -71,7 +79,7 @@ export async function POST(request: Request) {
       status: created.status
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    if (hasPrismaErrorCode(error, "P2002")) {
       return NextResponse.json(
         { error: "同じ type / slug / status のドキュメントが既に存在します（論理削除されていない行のみ一意です）" },
         { status: 409 }
