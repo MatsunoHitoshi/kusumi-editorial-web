@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
-import { ContentStatus, ContentType, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { notDeletedContentWhere } from "@/lib/content-document-scope";
 import { getSessionUser, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+const contentTypeSchema = z.enum(["page", "article", "project", "reading"]);
+const contentStatusSchema = z.enum(["draft", "published"]);
+
 const createSchema = z.object({
-  type: z.nativeEnum(ContentType),
+  type: contentTypeSchema,
   slug: z.string().min(1),
   title: z.string().min(1),
-  status: z.nativeEnum(ContentStatus).default(ContentStatus.draft),
+  status: contentStatusSchema.default("draft"),
   body: z.record(z.unknown()).default({ type: "doc", content: [] })
 });
 
@@ -56,7 +59,7 @@ export async function POST(request: Request) {
         title: payload.title,
         status: payload.status,
         body: payload.body as Prisma.InputJsonValue,
-        publishedAt: payload.status === ContentStatus.published ? new Date() : null
+        publishedAt: payload.status === "published" ? new Date() : null
       }
     });
 

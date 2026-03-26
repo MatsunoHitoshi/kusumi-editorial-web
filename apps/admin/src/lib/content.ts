@@ -1,13 +1,15 @@
-import { ContentStatus, ContentType, type Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import type { PublishSnapshot } from "@kusumi/content-schema";
 import { notDeletedContentWhere } from "@/lib/content-document-scope";
 import { prisma } from "@/lib/prisma";
 
-export const contentTypeByBucket: Record<"pages" | "articles" | "projects" | "reading", ContentType> = {
-  pages: ContentType.page,
-  articles: ContentType.article,
-  projects: ContentType.project,
-  reading: ContentType.reading
+export type ContentTypeValue = "page" | "article" | "project" | "reading";
+
+export const contentTypeByBucket: Record<"pages" | "articles" | "projects" | "reading", ContentTypeValue> = {
+  pages: "page",
+  articles: "article",
+  projects: "project",
+  reading: "reading"
 };
 
 function asContent<
@@ -30,7 +32,7 @@ export async function getLatestPublishVersionTag(): Promise<string | null> {
   const agg = await prisma.contentDocument.aggregate({
     where: {
       ...notDeletedContentWhere,
-      status: ContentStatus.published,
+      status: "published",
       publishVersion: { not: null }
     },
     _max: { publishVersion: true }
@@ -42,7 +44,7 @@ export async function getPublishSnapshot(publishVersion: string): Promise<Publis
   const docs = await prisma.contentDocument.findMany({
     where: {
       ...notDeletedContentWhere,
-      status: ContentStatus.published,
+      status: "published",
       publishVersion
     },
     orderBy: [{ type: "asc" }, { updatedAt: "desc" }]
@@ -52,23 +54,23 @@ export async function getPublishSnapshot(publishVersion: string): Promise<Publis
     version: publishVersion,
     generatedAt: new Date().toISOString(),
     pages: docs
-      .filter((doc) => doc.type === ContentType.page)
+      .filter((doc) => doc.type === "page")
       .map((doc) => asContent(doc, "page")),
     articles: docs
-      .filter((doc) => doc.type === ContentType.article)
+      .filter((doc) => doc.type === "article")
       .map((doc) => asContent(doc, "article")),
     projects: docs
-      .filter((doc) => doc.type === ContentType.project)
+      .filter((doc) => doc.type === "project")
       .map((doc) => asContent(doc, "project")),
     readings: docs
-      .filter((doc) => doc.type === ContentType.reading)
+      .filter((doc) => doc.type === "reading")
       .map((doc) => asContent(doc, "reading"))
   };
 }
 
 export async function assignPublishVersion(publishVersion: string): Promise<number> {
   const result = await prisma.contentDocument.updateMany({
-    where: { ...notDeletedContentWhere, status: ContentStatus.published },
+    where: { ...notDeletedContentWhere, status: "published" },
     data: { publishVersion }
   });
   return result.count;
@@ -76,7 +78,7 @@ export async function assignPublishVersion(publishVersion: string): Promise<numb
 
 export interface PublishPreviewItem {
   id: string;
-  type: ContentType;
+  type: ContentTypeValue;
   slug: string;
   title: string;
   publishVersion: string | null;
@@ -91,7 +93,7 @@ export interface PublishPreviewSummary {
 
 export async function getPublishPreviewSummary(): Promise<PublishPreviewSummary> {
   const published = await prisma.contentDocument.findMany({
-    where: { ...notDeletedContentWhere, status: ContentStatus.published },
+    where: { ...notDeletedContentWhere, status: "published" },
     select: {
       id: true,
       type: true,

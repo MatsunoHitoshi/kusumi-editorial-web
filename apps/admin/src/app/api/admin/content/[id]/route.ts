@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ContentStatus, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { notDeletedContentWhere } from "@/lib/content-document-scope";
 import { getSessionUser, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+const contentStatusSchema = z.enum(["draft", "published"]);
+
 const updateSchema = z.object({
   slug: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
-  status: z.nativeEnum(ContentStatus).optional(),
+  status: contentStatusSchema.optional(),
   body: z.record(z.unknown()).optional()
 });
 
@@ -41,9 +43,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         body: payload.body as Prisma.InputJsonValue | undefined,
         status: payload.status,
         publishedAt:
-          payload.status === ContentStatus.published
+          payload.status === "published"
             ? new Date()
-            : payload.status === ContentStatus.draft
+            : payload.status === "draft"
               ? null
               : undefined
       }
