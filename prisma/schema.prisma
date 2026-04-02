@@ -24,6 +24,14 @@ enum UserRole {
   editor
 }
 
+enum SiteDeployStatus {
+  queued
+  building
+  deploying
+  succeeded
+  failed
+}
+
 /** 固定ページ（type=page）の公開サイトでの表示モード */
 enum PageDisplayMode {
   normal
@@ -61,4 +69,24 @@ model ContentDocument {
 
   @@index([type, slug, status])
   @@index([status, publishVersion])
+}
+
+model SiteDeployHistory {
+  id                String           @id @default(cuid())
+  publishVersion     String
+  status            SiteDeployStatus @default(queued)
+  queuedAt          DateTime         @default(now())
+  finishedAt        DateTime?
+  triggeredBy       String?
+  reason            String?
+  githubRunId       String?
+  githubRunAttempt  Int?
+  githubRunUrl      String?
+  buildConclusion   String?
+  deployConclusion  String?
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([publishVersion])
+  @@index([status, queuedAt])
+  @@index([finishedAt])
 }

@@ -6,6 +6,7 @@ import { createPublishVersion } from "@/lib/publish-version";
 import { getSessionUser, requireRole } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { assignPublishVersion } from "@/lib/content";
+import { prisma } from "@/lib/prisma";
 import { findNpmWorkspaceRoot } from "@/lib/repo-root";
 
 const dispatchSchema = z.object({
@@ -29,6 +30,15 @@ export async function POST(request: Request) {
     const body = dispatchSchema.parse(await request.json());
     const publishVersion = createPublishVersion();
     const publishedCount = await assignPublishVersion(publishVersion);
+
+    await prisma.siteDeployHistory.create({
+      data: {
+        publishVersion,
+        status: "queued",
+        triggeredBy: user.email,
+        reason: body.reason ?? null
+      }
+    });
 
     const shouldRunLocalBuild =
       process.env.NODE_ENV !== "production" ||

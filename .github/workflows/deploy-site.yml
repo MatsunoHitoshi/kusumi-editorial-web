@@ -60,6 +60,24 @@ jobs:
         with:
           path: apps/site/out
 
+      - name: Callback build result
+        if: always()
+        continue-on-error: true
+        env:
+          ADMIN_CALLBACK_URL: ${{ secrets.PUBLISH_API_BASE_URL }}
+          DEPLOY_CALLBACK_TOKEN: ${{ secrets.DEPLOY_CALLBACK_TOKEN }}
+          PUBLISH_VERSION: ${{ github.event.inputs.publishVersion }}
+          CONCLUSION: ${{ job.status }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          curl -sS -X POST "${ADMIN_CALLBACK_URL%/}/api/workflows/deploy-callback" \
+            -H "content-type: application/json" \
+            -H "x-deploy-callback-token: ${DEPLOY_CALLBACK_TOKEN}" \
+            -d "$(node -e 'console.log(JSON.stringify({publishVersion: process.env.PUBLISH_VERSION, stage: \"build\", conclusion: process.env.CONCLUSION, runId: String(process.env.RUN_ID), runAttempt: Number(process.env.RUN_ATTEMPT), runUrl: `https://github.com/${process.env.OWNER}/${process.env.REPO}/actions/runs/${process.env.RUN_ID}` }))')"
+
   deploy_pages:
     needs: build_site
     runs-on: ubuntu-latest
@@ -73,6 +91,24 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Callback deploy result
+        if: always()
+        continue-on-error: true
+        env:
+          ADMIN_CALLBACK_URL: ${{ secrets.PUBLISH_API_BASE_URL }}
+          DEPLOY_CALLBACK_TOKEN: ${{ secrets.DEPLOY_CALLBACK_TOKEN }}
+          PUBLISH_VERSION: ${{ github.event.inputs.publishVersion }}
+          CONCLUSION: ${{ job.status }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          curl -sS -X POST "${ADMIN_CALLBACK_URL%/}/api/workflows/deploy-callback" \
+            -H "content-type: application/json" \
+            -H "x-deploy-callback-token: ${DEPLOY_CALLBACK_TOKEN}" \
+            -d "$(node -e 'console.log(JSON.stringify({publishVersion: process.env.PUBLISH_VERSION, stage: \"deploy\", conclusion: process.env.CONCLUSION, runId: String(process.env.RUN_ID), runAttempt: Number(process.env.RUN_ATTEMPT), runUrl: `https://github.com/${process.env.OWNER}/${process.env.REPO}/actions/runs/${process.env.RUN_ID}` }))')"
 
   # Disabled for public repository operations:
   # failure details and operator metadata (e.g. triggeredBy) can leak to public Issues.

@@ -1,4 +1,5 @@
 import { ContentManager } from "@/components/editor/ContentManager";
+import { DeployHistoryPanel } from "@/components/DeployHistoryPanel";
 import { PublishPanel } from "@/components/PublishPanel";
 
 export default function AdminDashboard() {
@@ -10,6 +11,9 @@ export default function AdminDashboard() {
       </p>
       <div className="mt-8">
         <PublishPanel />
+      </div>
+      <div className="mt-8">
+        <DeployHistoryPanel />
       </div>
       <section className="mt-8">
         <ContentManager />
