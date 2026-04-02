@@ -73,10 +73,14 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
         run: |
+          payload=$(cat <<EOF
+          {"publishVersion":"${PUBLISH_VERSION}","stage":"build","conclusion":"${CONCLUSION}","runId":"${RUN_ID}","runAttempt":${RUN_ATTEMPT},"runUrl":"https://github.com/${OWNER}/${REPO}/actions/runs/${RUN_ID}"}
+          EOF
+          )
           curl -sS -X POST "${ADMIN_CALLBACK_URL%/}/api/workflows/deploy-callback" \
             -H "content-type: application/json" \
             -H "x-deploy-callback-token: ${DEPLOY_CALLBACK_TOKEN}" \
-            -d "$(node -e 'console.log(JSON.stringify({publishVersion: process.env.PUBLISH_VERSION, stage: \"build\", conclusion: process.env.CONCLUSION, runId: String(process.env.RUN_ID), runAttempt: Number(process.env.RUN_ATTEMPT), runUrl: `https://github.com/${process.env.OWNER}/${process.env.REPO}/actions/runs/${process.env.RUN_ID}` }))')"
+            --data-raw "${payload}"
 
   deploy_pages:
     needs: build_site
@@ -105,10 +109,14 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
         run: |
+          payload=$(cat <<EOF
+          {"publishVersion":"${PUBLISH_VERSION}","stage":"deploy","conclusion":"${CONCLUSION}","runId":"${RUN_ID}","runAttempt":${RUN_ATTEMPT},"runUrl":"https://github.com/${OWNER}/${REPO}/actions/runs/${RUN_ID}"}
+          EOF
+          )
           curl -sS -X POST "${ADMIN_CALLBACK_URL%/}/api/workflows/deploy-callback" \
             -H "content-type: application/json" \
             -H "x-deploy-callback-token: ${DEPLOY_CALLBACK_TOKEN}" \
-            -d "$(node -e 'console.log(JSON.stringify({publishVersion: process.env.PUBLISH_VERSION, stage: \"deploy\", conclusion: process.env.CONCLUSION, runId: String(process.env.RUN_ID), runAttempt: Number(process.env.RUN_ATTEMPT), runUrl: `https://github.com/${process.env.OWNER}/${process.env.REPO}/actions/runs/${process.env.RUN_ID}` }))')"
+            --data-raw "${payload}"
 
   # Disabled for public repository operations:
   # failure details and operator metadata (e.g. triggeredBy) can leak to public Issues.
