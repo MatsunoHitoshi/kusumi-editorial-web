@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import { DeployHistoryPanel } from "./DeployHistoryPanel";
 
 type Me = { role: "admin" | "editor"; email: string | null | undefined };
 
@@ -138,7 +139,7 @@ export function PublishPanel() {
       <h2 className="text-lg font-semibold">サイトの公開反映</h2>
       <p className="mt-2 text-sm text-zinc-600">
         それぞれの記事を作成したり、変更を保存するだけでは公開サイトへの反映は行われません。
-        公開反映を行うことで、現在の編集内容からページを構築して GitHub Pages（Webページ公開サービス）に反映します。誤操作防止のため最終確認があります。
+        公開反映を行うことで、現在の編集内容からページを構築して GitHub Pages（Webページ公開サービス）に反映します。
       </p>
       {me?.role === "admin" ? (
         <div className="mt-4 space-y-2">
@@ -269,6 +270,8 @@ export function PublishPanel() {
           </div>
         </div>
       )}
+
+      <DeployHistoryPanel />
     </section>
   );
 }

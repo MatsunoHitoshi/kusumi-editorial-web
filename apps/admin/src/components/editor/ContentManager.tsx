@@ -455,7 +455,7 @@ export function ContentManager() {
     );
 
     return (
-      <details key={node.key} open={depth === 1} className="group">
+      <details key={node.key} className="group">
         <summary className="cursor-pointer list-none rounded border border-transparent px-1.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200">
           <div className="flex items-center justify-between gap-2">
             <span className="font-mono">{node.label}</span>

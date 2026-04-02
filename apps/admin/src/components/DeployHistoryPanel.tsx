@@ -56,6 +56,7 @@ export function DeployHistoryPanel() {
   const [data, setData] = useState<DeployHistoryResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   const latestSuccessful = data?.latestSuccessful ?? null;
   const recent = data?.recent ?? [];
@@ -98,97 +99,105 @@ export function DeployHistoryPanel() {
   }, [shouldPoll]);
 
   return (
-    <section className="rounded border border-zinc-200 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">公開反映の履歴</h2>
-        <button
-          type="button"
-          className="rounded border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 disabled:opacity-50"
-          onClick={() => void load()}
-          disabled={loading}
-        >
-          {loading ? "更新中…" : "更新"}
-        </button>
-      </div>
+    <section className="mt-4">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between rounded px-1 py-1 text-left hover:bg-zinc-50"
+        onClick={() => setIsOpen((prev) => !prev)}
+        aria-expanded={isOpen}
+      >
+        <span className="inline-flex items-center gap-2">
+          <span className="text-sm text-zinc-500">{isOpen ? "▲" : "▼"}</span>
+          <h2 className="text-lg font-semibold">公開履歴</h2>
+        </span>
+      </button>
 
-      <div className="mt-3 text-sm text-zinc-700">
-        <p>
-          <span className="font-medium">最終成功:</span>{" "}
-          {latestSuccessful ? (
-            <>
-              {formatJpDateTime(latestSuccessful.finishedAt ?? latestSuccessful.queuedAt)}（v
-              {latestSuccessful.publishVersion}）
-            </>
-          ) : (
-            "まだありません"
-          )}
-        </p>
-        <p className="mt-1 text-xs text-zinc-500">
-          キュー投入後、GitHub Actions からのコールバックで成功/失敗が確定します。
-        </p>
-      </div>
+      {isOpen && (
+        <>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-zinc-700">
+            <p>
+              <span className="font-medium">最新:</span>{" "}
+              {latestSuccessful ? (
+                <>
+                  {formatJpDateTime(latestSuccessful.finishedAt ?? latestSuccessful.queuedAt)}（v
+                  {latestSuccessful.publishVersion}）
+                </>
+              ) : (
+                "まだありません"
+              )}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 disabled:opacity-50"
+                onClick={() => void load()}
+                disabled={loading}
+              >
+                {loading ? "更新中…" : "更新"}
+              </button>
+            </div>
+          </div>
 
-      {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
+          {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
 
-      <div className="mt-4 overflow-x-auto">
-        <table className="min-w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
-              <th className="py-2 pr-4">publishVersion</th>
-              <th className="py-2 pr-4">状態</th>
-              <th className="py-2 pr-4">投入</th>
-              <th className="py-2 pr-4">完了</th>
-              <th className="py-2 pr-4">実行者</th>
-              <th className="py-2 pr-4">メモ</th>
-              <th className="py-2 pr-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recent.length === 0 ? (
-              <tr>
-                <td className="py-3 text-zinc-500" colSpan={7}>
-                  履歴がありません。
-                </td>
-              </tr>
-            ) : (
-              recent.map((row) => (
-                <tr key={row.id} className="border-b border-zinc-100 align-top">
-                  <td className="py-2 pr-4 font-mono tabular-nums text-zinc-800">{row.publishVersion}</td>
-                  <td className="py-2 pr-4">
-                    <span className={`inline-flex rounded border px-2 py-0.5 text-xs ${statusTone(row.status)}`}>
-                      {statusLabel(row.status)}
-                    </span>
-                    <div className="mt-1 text-xs text-zinc-500">
-                      {row.buildConclusion ? `build: ${row.buildConclusion}` : null}
-                      {row.buildConclusion && row.deployConclusion ? " / " : null}
-                      {row.deployConclusion ? `deploy: ${row.deployConclusion}` : null}
-                    </div>
-                  </td>
-                  <td className="py-2 pr-4 whitespace-nowrap">{formatJpDateTime(row.queuedAt)}</td>
-                  <td className="py-2 pr-4 whitespace-nowrap">{formatJpDateTime(row.finishedAt)}</td>
-                  <td className="py-2 pr-4 text-zinc-700">{row.triggeredBy ?? "-"}</td>
-                  <td className="py-2 pr-4 text-zinc-700">{row.reason ?? "-"}</td>
-                  <td className="py-2 pr-4">
-                    {row.githubRunUrl ? (
-                      <a
-                        href={row.githubRunUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:decoration-blue-700"
-                      >
-                        run
-                        {row.githubRunAttempt ? ` (${row.githubRunAttempt})` : ""}
-                      </a>
-                    ) : (
-                      <span className="text-zinc-400">-</span>
-                    )}
-                  </td>
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+                  <th className="py-2 pr-4">publishVersion</th>
+                  <th className="py-2 pr-4">状態</th>
+                  <th className="py-2 pr-4">投入</th>
+                  <th className="py-2 pr-4">完了</th>
+                  <th className="py-2 pr-4">実行者</th>
+                  <th className="py-2 pr-4">メモ</th>
+                  <th className="py-2 pr-4">Actions</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {recent.length === 0 ? (
+                  <tr>
+                    <td className="py-3 text-zinc-500" colSpan={7}>
+                      履歴がありません。
+                    </td>
+                  </tr>
+                ) : (
+                  recent.map((row) => {
+                    return (
+                      <tr key={row.id} className="border-b border-zinc-100 align-top">
+                        <td className="py-2 pr-4 font-mono tabular-nums text-zinc-800">{row.publishVersion}</td>
+                        <td className="py-2 pr-4">
+                          <span className={`inline-flex rounded border px-2 py-0.5 text-xs ${statusTone(row.status)}`}>
+                            {statusLabel(row.status)}
+                          </span>
+                        </td>
+                        <td className="py-2 pr-4 whitespace-nowrap">{formatJpDateTime(row.queuedAt)}</td>
+                        <td className="py-2 pr-4 whitespace-nowrap">{formatJpDateTime(row.finishedAt)}</td>
+                        <td className="py-2 pr-4 text-zinc-700">{row.triggeredBy ?? "-"}</td>
+                        <td className="py-2 pr-4 text-zinc-700">{row.reason ?? "-"}</td>
+                        <td className="py-2 pr-4">
+                          {row.githubRunUrl ? (
+                            <a
+                              href={row.githubRunUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-700 underline decoration-blue-300 underline-offset-2 hover:decoration-blue-700"
+                            >
+                              run
+                              {row.githubRunAttempt ? ` (${row.githubRunAttempt})` : ""}
+                            </a>
+                          ) : (
+                            <span className="text-zinc-400">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </section>
   );
 }

@@ -12,9 +12,6 @@ export default function AdminDashboard() {
       <div className="mt-8">
         <PublishPanel />
       </div>
-      <div className="mt-8">
-        <DeployHistoryPanel />
-      </div>
       <section className="mt-8">
         <ContentManager />
       </section>
