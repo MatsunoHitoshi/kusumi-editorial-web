@@ -74,7 +74,6 @@ jobs:
           REPO: ${{ github.event.repository.name }}
         run: |
           callback_base_url="${ADMIN_CALLBACK_URL%/}"
-          callback_base_url="${callback_base_url%/api/publish}"
           payload=$(cat <<EOF
           {"publishVersion":"${PUBLISH_VERSION}","stage":"build","conclusion":"${CONCLUSION}","runId":"${RUN_ID}","runAttempt":${RUN_ATTEMPT},"runUrl":"https://github.com/${OWNER}/${REPO}/actions/runs/${RUN_ID}"}
           EOF
@@ -120,7 +119,6 @@ jobs:
           REPO: ${{ github.event.repository.name }}
         run: |
           callback_base_url="${ADMIN_CALLBACK_URL%/}"
-          callback_base_url="${callback_base_url%/api/publish}"
           payload=$(cat <<EOF
           {"publishVersion":"${PUBLISH_VERSION}","stage":"deploy","conclusion":"${CONCLUSION}","runId":"${RUN_ID}","runAttempt":${RUN_ATTEMPT},"runUrl":"https://github.com/${OWNER}/${REPO}/actions/runs/${RUN_ID}"}
           EOF

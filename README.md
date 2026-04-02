@@ -92,8 +92,9 @@
   - `notify_failure`
 - Secrets:
   - `ADMIN_DISPATCH_TOKEN`
-  - `PUBLISH_API_BASE_URL`
+  - `PUBLISH_API_BASE_URL`（**admin の origin**。`https://admin.example.com` の形式で設定し、`/api/publish` は付けない）
   - `PUBLISH_API_TOKEN`
+  - `DEPLOY_CALLBACK_TOKEN`（admin の `DEPLOY_CALLBACK_TOKEN` と同じ値）
   - `NOTIFY_WEBHOOK_URL` (任意)
 - Dispatch payload:
   - `triggeredBy`
@@ -152,7 +153,7 @@ npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prism
   - `npm run supabase:stop`
   - `npm run supabase:db:reset`
 - `apps/admin/.env` と `apps/site/.env` はローカルURL前提の値を設定済みです。
-- ルートで `npm run dev`（site **:3000** / admin **:3001**）を使う場合は、`NEXTAUTH_URL` を admin の URL（例: `http://localhost:3001`）、サイトの `PUBLISH_API_BASE_URL` を admin の API（例: `http://127.0.0.1:3001`）に揃えてください。
+- ルートで `npm run dev`（site **:3000** / admin **:3001**）を使う場合は、`NEXTAUTH_URL` を admin の URL（例: `http://localhost:3001`）、サイトの `PUBLISH_API_BASE_URL` を admin の origin（例: `http://127.0.0.1:3001`。`/api/publish` は付けない）に揃えてください。
 
 ### 初回セットアップ手順
 
