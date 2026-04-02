@@ -77,10 +77,18 @@ jobs:
           {"publishVersion":"${PUBLISH_VERSION}","stage":"build","conclusion":"${CONCLUSION}","runId":"${RUN_ID}","runAttempt":${RUN_ATTEMPT},"runUrl":"https://github.com/${OWNER}/${REPO}/actions/runs/${RUN_ID}"}
           EOF
           )
-          curl -sS -X POST "${ADMIN_CALLBACK_URL%/}/api/workflows/deploy-callback" \
+          callback_response=$(curl -sS -X POST "${ADMIN_CALLBACK_URL%/}/api/workflows/deploy-callback" \
             -H "content-type: application/json" \
             -H "x-deploy-callback-token: ${DEPLOY_CALLBACK_TOKEN}" \
-            --data-raw "${payload}"
+            --data-raw "${payload}" \
+            -w "\nHTTP_STATUS:%{http_code}")
+          callback_body=$(echo "${callback_response}" | sed '$d')
+          callback_status=$(echo "${callback_response}" | sed -n 's/^HTTP_STATUS://p')
+          echo "deploy-callback(build) status=${callback_status}"
+          echo "deploy-callback(build) body=${callback_body}"
+          if [ "${callback_status}" -ge 400 ]; then
+            echo "::warning::deploy-callback(build) failed with status ${callback_status}"
+          fi
 
   deploy_pages:
     needs: build_site
@@ -113,10 +121,18 @@ jobs:
           {"publishVersion":"${PUBLISH_VERSION}","stage":"deploy","conclusion":"${CONCLUSION}","runId":"${RUN_ID}","runAttempt":${RUN_ATTEMPT},"runUrl":"https://github.com/${OWNER}/${REPO}/actions/runs/${RUN_ID}"}
           EOF
           )
-          curl -sS -X POST "${ADMIN_CALLBACK_URL%/}/api/workflows/deploy-callback" \
+          callback_response=$(curl -sS -X POST "${ADMIN_CALLBACK_URL%/}/api/workflows/deploy-callback" \
             -H "content-type: application/json" \
             -H "x-deploy-callback-token: ${DEPLOY_CALLBACK_TOKEN}" \
-            --data-raw "${payload}"
+            --data-raw "${payload}" \
+            -w "\nHTTP_STATUS:%{http_code}")
+          callback_body=$(echo "${callback_response}" | sed '$d')
+          callback_status=$(echo "${callback_response}" | sed -n 's/^HTTP_STATUS://p')
+          echo "deploy-callback(deploy) status=${callback_status}"
+          echo "deploy-callback(deploy) body=${callback_body}"
+          if [ "${callback_status}" -ge 400 ]; then
+            echo "::warning::deploy-callback(deploy) failed with status ${callback_status}"
+          fi
 
   # Disabled for public repository operations:
   # failure details and operator metadata (e.g. triggeredBy) can leak to public Issues.
