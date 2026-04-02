@@ -34,9 +34,13 @@
 
 ### 目次リンクと管理画面で用意するページ（`type=page`）
 
-トップの目次は静的に定義されており、次の **`/{slug}` 形式の URL** と一致する固定ページ（`type=page`）を管理アプリで作成・公開してください。`/pages/` は付きません（実装は `apps/site/src/app/[slug]/page.tsx`）。slug を変える場合は `apps/site/src/lib/top-page.ts` の `href` も合わせて更新します。
+トップの目次は静的に定義されており、次の **`/{slug}` またはネストした `/{親}/{子}` 形式の URL** と一致する固定ページ（`type=page`）を管理アプリで作成・公開してください。`/pages/` は付きません（実装は catch-all の `apps/site/src/app/[...slug]/page.tsx`）。単一スラッグの例では `about` → `/about`、子ページは DB の slug を `publications/my-book` のようにスラッシュ区切りで登録すると `/publications/my-book` で公開されます。slug を変える場合は `apps/site/src/lib/top-page.ts` の `href` も合わせて更新します。
 
-読書会の「一覧・概要」用の固定ページの slug が `reading` の場合は URL は `/reading` になります。個別の読書会エントリ（`type=reading`）は従来どおり `/reading/{別のslug}` になり、パスが競合しません。
+**表示モード**（管理画面で `type=page` のときのみ）: **通常**は従来どおり本文のみ。**目次**は本文内の見出し2（h2）からページ内目次を生成します（PC は左寄せの縦目次、狭い画面では上部の横スクロール）。**ポートフォリオ**は「親 slug の直下1階層だけ」の子固定ページをサムネイル付きグリッドで一覧し、親の本文はその上に表示されます。子のサムネイルは子ページ本文の先頭画像を使い、画像がない場合はプレースホルダーです。
+
+**予約パス**: 固定ページの slug を **`articles/...`・`projects/...`・`reading/...` のようにネスト**させないでください（2セグメント目以降が、同名の専用ルート上の個別URLと衝突します）。単一スラッグの `reading` や `publications` は下表のとおり利用できます。
+
+読書会の「一覧・概要」用の固定ページの slug が `reading` の場合は URL は `/reading` になります（専用の `reading/[slug]` は2セグメント目が必要なため、`/reading` 自体は固定ページ側に解決されます）。個別の読書会エントリ（`type=reading`）は従来どおり `/reading/{別のslug}` です。一方、**固定ページの slug を `reading/何か` のようにネストさせると**、読書会エントリの URL と同じ形になるため避けてください（`articles/...`・`projects/...` も同様です）。
 
 | 目次の表示名（原案どおり） | 公開 URL | 固定ページの slug |
 |----------------------------|----------|-------------------|
@@ -69,7 +73,7 @@
   - `GET /api/admin/me` ログイン中ユーザー（role 判定用）
   - `GET /api/admin/content` 一覧（論理削除済みは除く）
   - `POST /api/admin/content` 作成（editor以上）
-  - `PATCH /api/admin/content/:id` 更新（editor以上・論理削除済みは 410）
+  - `PATCH /api/admin/content/:id` 更新（editor以上・論理削除済みは 410）。`type=page` のとき任意で `pageDisplayMode`（`normal` / `toc` / `portfolio` または `null`）
   - `DELETE /api/admin/content/:id` 論理削除（`deletedAt` を設定・editor以上。同一 `type/slug/status` は削除後に再利用可）
 - ワークフロー起動API
   - `POST /api/workflows/dispatch`（adminのみ）
@@ -148,6 +152,7 @@ npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prism
   - `npm run supabase:stop`
   - `npm run supabase:db:reset`
 - `apps/admin/.env` と `apps/site/.env` はローカルURL前提の値を設定済みです。
+- ルートで `npm run dev`（site **:3000** / admin **:3001**）を使う場合は、`NEXTAUTH_URL` を admin の URL（例: `http://localhost:3001`）、サイトの `PUBLISH_API_BASE_URL` を admin の API（例: `http://127.0.0.1:3001`）に揃えてください。
 
 ### 初回セットアップ手順
 
@@ -173,7 +178,7 @@ npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prism
 - 必須環境変数（adminアプリ）:
   - `DATABASE_URL`
   - `NEXTAUTH_SECRET`
-  - `NEXTAUTH_URL`（本番推奨）
+  - `NEXTAUTH_URL`（**ローカルでは管理アプリの origin と一致させる**。`npm run dev` で admin を **3001** にしている場合は `http://localhost:3001`。3000 のままだとサインイン POST がサイト側に飛び、Next.js の Server Actions 検証で失敗します）
 - 初期管理者作成:
   - `apps/admin/.env` に `ADMIN_EMAIL` と `ADMIN_PASSWORD` を書く（スクリプトが先に `.env` を読んでから Prisma を初期化します）。またはシェルで `export` してから
   - `npm --workspace @kusumi/admin run create-admin`

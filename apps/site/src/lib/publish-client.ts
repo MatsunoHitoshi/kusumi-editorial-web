@@ -18,7 +18,8 @@ const emptyEnvelope = (): PublishSnapshotEnvelope =>
       pages: [],
       articles: [],
       projects: [],
-      readings: []
+      readings: [],
+      publications: []
     }
   });
 

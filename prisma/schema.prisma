@@ -11,6 +11,7 @@ enum ContentType {
   article
   project
   reading
+  publication
 }
 
 enum ContentStatus {
@@ -21,6 +22,13 @@ enum ContentStatus {
 enum UserRole {
   admin
   editor
+}
+
+/** 固定ページ（type=page）の公開サイトでの表示モード */
+enum PageDisplayMode {
+  normal
+  toc
+  portfolio
 }
 
 model User {
@@ -40,6 +48,10 @@ model ContentDocument {
   title          String
   status         ContentStatus @default(draft)
   body           Json
+  /** type=page のときのみ使用。それ以外は null */
+  pageDisplayMode PageDisplayMode?
+  /** type=page のときのみ使用。ポートフォリオ表示時の直下子ページ順序 */
+  portfolioOrder Int?
   publishVersion String?
   publishedAt    DateTime?
   /** 論理削除日時。null のときのみ公開・一覧の対象 */

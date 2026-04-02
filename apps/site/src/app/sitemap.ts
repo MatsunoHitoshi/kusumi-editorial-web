@@ -49,6 +49,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7
     });
   }
+  for (const pub of snap.publications) {
+    routes.push({
+      url: `${base}/publications/${pub.slug}`,
+      lastModified: new Date(pub.updatedAt),
+      changeFrequency: "monthly",
+      priority: 0.8
+    });
+  }
 
   return routes;
 }

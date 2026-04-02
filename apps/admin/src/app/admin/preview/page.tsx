@@ -34,7 +34,8 @@ function parsePayload(raw: string | null): ContentPreviewPayload | null {
       status: data.status,
       body: data.body,
       selectedId: data.selectedId ?? null,
-      updatedAt: data.updatedAt ?? new Date().toISOString()
+      updatedAt: data.updatedAt ?? new Date().toISOString(),
+      pageDisplayMode: data.pageDisplayMode
     };
   } catch {
     return null;
@@ -113,6 +114,22 @@ export default function AdminPreviewPage() {
       <p className="mt-2 text-xs text-zinc-500">
         種別: {payload.type} / 状態: {payload.status} / id: {payload.selectedId ?? "new"}
       </p>
+      {payload.type === "page" && payload.pageDisplayMode && payload.pageDisplayMode !== "normal" ? (
+        <div className="mt-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          {payload.pageDisplayMode === "toc" ? (
+            <p>
+              <strong>目次モード</strong>
+              ：公開サイトでは見出し2ごとの目次（PC左固定・スマホはヘッダ下横並び）と本文が表示されます。下記は本文プレビューのみです。
+            </p>
+          ) : (
+            <p>
+              <strong>ポートフォリオモード</strong>
+              ：公開サイトでは、スラッグが「{payload.slug}
+              /…」形式の子固定ページが一覧（サムネイル＋タイトル）で並びます。下記は親ページ本文のプレビューです。
+            </p>
+          )}
+        </div>
+      ) : null}
 
       <article
         className="prose prose-zinc mt-10 max-w-none font-serif prose-headings:font-serif prose-a:text-blue-800 prose-img:rounded-lg"

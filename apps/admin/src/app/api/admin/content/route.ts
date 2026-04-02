@@ -3,16 +3,20 @@ import { z } from "zod";
 import { notDeletedContentWhere } from "@/lib/content-document-scope";
 import { getSessionUser, requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { validatePublicSlug } from "@/lib/slug-validation";
 
-const contentTypeSchema = z.enum(["page", "article", "project", "reading"]);
+const contentTypeSchema = z.enum(["page", "article", "project", "reading", "publication"]);
 const contentStatusSchema = z.enum(["draft", "published"]);
+const pageDisplayModeSchema = z.enum(["normal", "toc", "portfolio"]);
 
 const createSchema = z.object({
   type: contentTypeSchema,
   slug: z.string().min(1),
   title: z.string().min(1),
   status: contentStatusSchema.default("draft"),
-  body: z.record(z.unknown()).default({ type: "doc", content: [] })
+  body: z.record(z.unknown()).default({ type: "doc", content: [] }),
+  pageDisplayMode: pageDisplayModeSchema.optional(),
+  portfolioOrder: z.number().int().nonnegative().nullable().optional()
 });
 
 function hasPrismaErrorCode(error: unknown, code: string): boolean {
@@ -48,6 +52,7 @@ export async function GET() {
       title: string;
       status: string;
       publishVersion: string | null;
+      createdAt: Date;
       updatedAt: Date;
     }) => ({
       id: doc.id,
@@ -56,6 +61,7 @@ export async function GET() {
       title: doc.title,
       status: doc.status,
       publishVersion: doc.publishVersion,
+      createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString()
     }))
   });
@@ -67,14 +73,26 @@ export async function POST(request: Request) {
     requireRole(user, "editor");
 
     const payload = createSchema.parse(await request.json());
+    const slugCheck = validatePublicSlug(payload.slug, payload.type);
+    if (!slugCheck.ok) {
+      return NextResponse.json({ error: slugCheck.message }, { status: 400 });
+    }
+    const pageDisplayMode =
+      payload.type === "page" ? (payload.pageDisplayMode ?? null) : null;
+    const portfolioOrder =
+      payload.type === "page" || payload.type === "publication"
+        ? (payload.portfolioOrder ?? null)
+        : null;
     const created = await prisma.contentDocument.create({
       data: {
         schemaVersion: 1,
         type: payload.type,
-        slug: payload.slug,
+        slug: payload.slug.trim(),
         title: payload.title,
         status: payload.status,
         body: payload.body as any,
+        pageDisplayMode,
+        portfolioOrder,
         publishedAt: payload.status === "published" ? new Date() : null
       }
     });

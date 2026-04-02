@@ -8,7 +8,7 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-4xl gap-1 px-4 py-4 flex-row items-center justify-between sm:gap-4 sm:px-6 sm:py-5">
         <div>
           <p className="text-[11px] font-medium tracking-wide text-zinc-500 sm:text-xs">{topPageIntro.labName}</p>
-          <Link href="/" className="mt-1 inline-block font-serif text-lg text-zinc-900 hover:text-zinc-700 sm:text-xl">
+          <Link href="/" className="mt-1 inline-block font-serif font-semibold text-base text-zinc-900 hover:text-zinc-700">
             {topPageIntro.studioName}
           </Link>
         </div>

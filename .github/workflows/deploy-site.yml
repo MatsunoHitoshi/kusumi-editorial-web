@@ -14,7 +14,7 @@ on:
       contentTypes:
         description: "JSON array of content types"
         required: false
-        default: '["pages","articles","projects","reading"]'
+        default: '["pages","articles","projects","reading","publications"]'
         type: string
       fullRebuild:
         description: "Run full rebuild"

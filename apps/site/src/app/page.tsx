@@ -15,7 +15,7 @@ export default function HomePage() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
       <div className="space-y-1 font-bold">
-        <p className="font-serif text-2xl text-zinc-900 sm:text-3xl">{topPageIntro.labName}</p>
+        <p className="font-serif text-lg text-zinc-900 sm:text-xl">{topPageIntro.labName}</p>
         <p className="font-serif text-2xl text-zinc-900 sm:text-3xl">{topPageIntro.studioName}</p>
       </div>
 

@@ -5,7 +5,7 @@ import { env } from "@/lib/env";
 import { getSessionUser, requireRole } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase";
 
-const contentTypeSchema = z.enum(["page", "article", "project", "reading"]);
+const contentTypeSchema = z.enum(["page", "article", "project", "reading", "publication"]);
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);

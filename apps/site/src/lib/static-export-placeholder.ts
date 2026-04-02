@@ -11,3 +11,18 @@ export function withExportPlaceholder<T extends { slug: string }>(items: T[]): T
 export function isExportPlaceholderSlug(slug: string): boolean {
   return slug === EXPORT_EMPTY_PLACEHOLDER_SLUG;
 }
+
+/** ネストURL用 catch-all（`[...slug]`） */
+export function withExportPlaceholderSegments<T extends { slug: string[] }>(
+  items: T[]
+): T[] | { slug: string[] }[] {
+  return items.length > 0 ? items : [{ slug: [EXPORT_EMPTY_PLACEHOLDER_SLUG] }];
+}
+
+export function isExportPlaceholderSegments(segments: string[] | undefined): boolean {
+  return (
+    Array.isArray(segments) &&
+    segments.length === 1 &&
+    segments[0] === EXPORT_EMPTY_PLACEHOLDER_SLUG
+  );
+}

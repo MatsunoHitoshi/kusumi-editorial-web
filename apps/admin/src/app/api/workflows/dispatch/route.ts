@@ -11,12 +11,9 @@ import { findNpmWorkspaceRoot } from "@/lib/repo-root";
 const dispatchSchema = z.object({
   reason: z.string().max(200).optional(),
   fullRebuild: z.boolean().default(true),
-  contentTypes: z.array(z.enum(["pages", "articles", "projects", "reading"])).default([
-    "pages",
-    "articles",
-    "projects",
-    "reading"
-  ]),
+  contentTypes: z
+    .array(z.enum(["pages", "articles", "projects", "reading", "publications"]))
+    .default(["pages", "articles", "projects", "reading", "publications"]),
   confirmPublication: z.literal(true, {
     errorMap: () => ({ message: "公開反映の最終確認に同意してください" })
   })
@@ -58,7 +55,7 @@ export async function POST(request: Request) {
       const publishApiBaseUrl =
         process.env.PUBLISH_API_BASE_URL ??
         (origin ? origin.replace(/\/$/, "") : undefined) ??
-        "http://127.0.0.1:3000";
+        "http://127.0.0.1:3001";
 
       // admin の next dev から NODE_ENV=development が継承されると next build が壊れる（Html/useContext 等）
       const buildEnv: NodeJS.ProcessEnv = {

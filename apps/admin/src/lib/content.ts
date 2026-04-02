@@ -2,13 +2,17 @@ import type { PublishSnapshot } from "@kusumi/content-schema";
 import { notDeletedContentWhere } from "@/lib/content-document-scope";
 import { prisma } from "@/lib/prisma";
 
-export type ContentTypeValue = "page" | "article" | "project" | "reading";
+export type ContentTypeValue = "page" | "article" | "project" | "reading" | "publication";
 
-export const contentTypeByBucket: Record<"pages" | "articles" | "projects" | "reading", ContentTypeValue> = {
+export const contentTypeByBucket: Record<
+  "pages" | "articles" | "projects" | "reading" | "publications",
+  ContentTypeValue
+> = {
   pages: "page",
   articles: "article",
   projects: "project",
-  reading: "reading"
+  reading: "reading",
+  publications: "publication"
 };
 
 type ContentStatusValue = "draft" | "published";
@@ -21,13 +25,15 @@ type ContentDocumentRow = {
   title: string;
   status: string;
   body: unknown;
+  pageDisplayMode: "normal" | "toc" | "portfolio" | null;
+  portfolioOrder: number | null;
   publishVersion: string | null;
   publishedAt: Date | null;
   updatedAt: Date;
 };
 
 function asContent<
-  T extends "page" | "article" | "project" | "reading"
+  T extends "page" | "article" | "project" | "reading" | "publication"
 >(
   doc: {
     schemaVersion: number;
@@ -37,10 +43,12 @@ function asContent<
     body: unknown;
     updatedAt: Date;
     publishedAt: Date | null;
+    pageDisplayMode?: "normal" | "toc" | "portfolio" | null;
+    portfolioOrder?: number | null;
   },
   type: T
 ) {
-  return {
+  const base = {
     schemaVersion: doc.schemaVersion,
     type,
     slug: doc.slug,
@@ -50,6 +58,21 @@ function asContent<
     updatedAt: doc.updatedAt.toISOString(),
     publishedAt: doc.publishedAt?.toISOString()
   };
+  if (type === "page") {
+    const extra: {
+      pageDisplayMode?: "normal" | "toc" | "portfolio";
+      portfolioOrder?: number;
+    } = {};
+    if (doc.pageDisplayMode) extra.pageDisplayMode = doc.pageDisplayMode;
+    if (doc.portfolioOrder !== null) extra.portfolioOrder = doc.portfolioOrder;
+    return { ...base, ...extra };
+  }
+  if (type === "publication") {
+    if (doc.portfolioOrder !== null) {
+      return { ...base, portfolioOrder: doc.portfolioOrder };
+    }
+  }
+  return base;
 }
 
 /** 公開済みドキュメントに付いている publishVersion のうち最新（文字列比較で yyyyMMddHHmmss） */
@@ -89,7 +112,10 @@ export async function getPublishSnapshot(publishVersion: string): Promise<Publis
       .map((doc) => asContent(doc, "project")),
     readings: docs
       .filter((doc) => doc.type === "reading")
-      .map((doc) => asContent(doc, "reading"))
+      .map((doc) => asContent(doc, "reading")),
+    publications: docs
+      .filter((doc) => doc.type === "publication")
+      .map((doc) => asContent(doc, "publication"))
   };
 }
 
@@ -112,7 +138,7 @@ export interface PublishPreviewItem {
 
 export interface PublishPreviewSummary {
   totalPublished: number;
-  byType: Record<"page" | "article" | "project" | "reading", number>;
+  byType: Record<"page" | "article" | "project" | "reading" | "publication", number>;
   items: PublishPreviewItem[];
 }
 
@@ -141,7 +167,8 @@ export async function getPublishPreviewSummary(): Promise<PublishPreviewSummary>
     page: 0,
     article: 0,
     project: 0,
-    reading: 0
+    reading: 0,
+    publication: 0
   };
 
   for (const row of published) {
